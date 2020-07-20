@@ -1,0 +1,4 @@
+__pycache__
+dist/
+.idea/
+ham.egg-info/
