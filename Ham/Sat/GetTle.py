@@ -39,4 +39,6 @@ class GetTle:
                 with open(cdir+"/"+filename,"wt") as tle_file:
                     tle_file.write(response.text)
                     self.logger.debug("Filename written")
-
+            else:
+                self.logger.error(f"Unable to find {url}")
+                raise ValueError
