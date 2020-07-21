@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-requirements = 'wheel', 'ephem', 'requests',
+requirements = 'wheel', 'ephem', 'requests','requests-mock',
 for p in find_packages():
     print("Installing package "+str(p))
 setup(
