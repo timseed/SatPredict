@@ -7,3 +7,4 @@ Flask~=1.1.2
 pytz~=2020.1
 flask
 flask_restx
+flask-socketio

@@ -7,6 +7,16 @@ import predict
 import time
 from datetime import datetime
 from pytz import timezone
+from dataclasses import dataclass, asdict
+
+
+@dataclass
+class Prediction:
+    name: str
+    delay: str
+    start: str
+    duration: int
+    max_ele: int
 
 class Passes:
 
@@ -27,7 +37,13 @@ class Passes:
         seconds = seconds - mins * 60
         return f"{hours:02}:{mins:02}:{seconds:02}"
 
-    def predict(self, days=2.0):
+    def predict(self, days=2.0) -> list :
+        """
+
+        :param days:
+        :return: List of Predictions
+        """
+        predictions=[]
         utc_now_seconds = float(datetime.now(tz=timezone('UTC')).timestamp())
         self.logger.info(f"Time now in UTC is {datetime.now(tz=timezone('UTC')).isoformat()}")
         self.logger.info(f"Checking for {self.config.Lat}N {self.config.Lon}E {self.config.Lat}m ")
@@ -51,4 +67,6 @@ class Passes:
                         when_utc_str = when.strftime("%Y-%m-%d %H:%M:%S %Z%z")
                         delay_str  = self.secs_to_hms(orbit.start - utc_now_seconds)
                         self.logger.info(f"{sat} Delay: {delay_str} Start: {when_utc_str} Duration: {int(orbit.duration()):4} Max Ele: {int(orbit.peak()['elevation']):3} ")
+                        predictions.append(Prediction(sat,delay_str,when_utc_str,int(orbit.duration()),int(orbit.peak()['elevation'])))
                 self.logger.debug(f"We have {len(passes)} Passes for {sat}")
+            return predictions
