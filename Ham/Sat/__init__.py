@@ -5,5 +5,5 @@ from .GetTle import GetTle
 from .Glob import config_dir
 from .MyStation import MyStation
 from .Passes import Passes
-
+from .logging import set_logging
 
