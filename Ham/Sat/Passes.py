@@ -37,9 +37,10 @@ class Passes:
         seconds = seconds - mins * 60
         return f"{hours:02}:{mins:02}:{seconds:02}"
 
-    def predict(self, days=2.0) -> list :
+    def predict(self, days=2.0, max_passes=10) -> list :
         """
 
+        :param max_passes:
         :param days:
         :return: List of Predictions
         """
@@ -50,23 +51,32 @@ class Passes:
         for sat in self.config.Sats:
             self.logger.debug(f"Checking for {sat}")
             sat, line1, line2 = self.tle_reader.find_sat(sat)
+            pass_count = 0
             if sat:
+
                 self.logger.debug(f"We have TLE for {sat}")
                 tle = f"{sat}\n{line1}\n{line2}\n"
                 predict.observe(tle, self.config.Qth)
                 try:
+
                     p = predict.transits(tle, self.config.Qth, ending_after=utc_now_seconds - 900.0,
                                          ending_before=utc_now_seconds+days*24.0*3600.0)
                     passes = list(p)
-                except Exception:
-                    passes=[]
-                for orbit in passes:
-                    if orbit.peak()['elevation'] > self.config.MinAlt:
-                        when = datetime.fromtimestamp(orbit.start)
-                        #local_time = when.astimezone(timezone(self.config.TimeZone))
-                        when_utc_str = when.strftime("%Y-%m-%d %H:%M:%S %Z%z")
-                        delay_str  = self.secs_to_hms(orbit.start - utc_now_seconds)
-                        self.logger.info(f"{sat} Delay: {delay_str} Start: {when_utc_str} Duration: {int(orbit.duration()):4} Max Ele: {int(orbit.peak()['elevation']):3} ")
-                        predictions.append(Prediction(sat,delay_str,when_utc_str,int(orbit.duration()),int(orbit.peak()['elevation'])))
-                self.logger.debug(f"We have {len(passes)} Passes for {sat}")
-            return predictions
+
+                    for orbit in passes:
+                        if orbit.peak()['elevation'] > self.config.MinAlt:
+                            when = datetime.fromtimestamp(orbit.start)
+                            #local_time = when.astimezone(timezone(self.config.TimeZone))
+                            when_utc_str = when.strftime("%Y-%m-%d %H:%M:%S %Z%z")
+                            delay_str  = self.secs_to_hms(orbit.start - utc_now_seconds)
+                            self.logger.info(f"{sat} Delay: {delay_str} Start: {when_utc_str} Duration: {int(orbit.duration()):4} Max Ele: {int(orbit.peak()['elevation']):3} ")
+                            predictions.append(Prediction(sat,delay_str,when_utc_str,int(orbit.duration()),int(orbit.peak()['elevation'])))
+                            pass_count += 1
+                            if pass_count >= max_passes:
+                                self.logger.info(f"Max pass count of {max_passes} reached for {sat}")
+                                break
+
+                    self.logger.debug(f"We have {len(passes)} Passes for {sat}")
+                except:
+                    self.logger.warning(f"Count not calculate passes for {sat}")
+        return predictions

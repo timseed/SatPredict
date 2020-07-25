@@ -18,5 +18,4 @@ $(document).ready(function(){
         }
         $('#log').html(numbers_string);
     });
-
 });

@@ -2,13 +2,11 @@ from Ham.Sat.Web.controllers import app
 from Ham.Sat.Web.controllers import socketio
 from Ham.Sat.Passes import Passes
 from flask import render_template
-import daiquiri
 from time import sleep
 from threading import Thread, Event
 from dataclasses import asdict
 passes_thread_stop_event = Event()
 passes_gbl_thread = Thread()
-
 
 def getpasses():
     """
@@ -16,19 +14,20 @@ def getpasses():
     Ideally to be run in a separate thread?
     """
     my_tracker = Passes()
-    print("In getpasses")
+    app.logger.debug("In getpasses")
     # infinite loop of magical random numbers
     while not passes_thread_stop_event.isSet():
-        pss = my_tracker.predict()
+        pss = my_tracker.predict(days=2.0,max_passes=1)
+        app.logger.debug(f"we have {len(pss)} To send to web page")
         for p in pss:
-            print(f"Sending pass {asdict(p)}")
+            app.logger.debug(f"Sending pass {asdict(p)}")
             socketio.emit("newpass", asdict(p), namespace="/passes")
         socketio.sleep(5)
-    print("Event to stop is raised")
+
 
 
 def delayed_start():
-    print("in delayed start")
+    app.logger.debug("in delayed start")
     sleep(1)
     getpasses()
 
@@ -38,7 +37,7 @@ def delayed_start():
 def test_connect():
     global passes_gbl_thread
     # need visibility of the global thread object
-    print("Client connected")
+    app.logger.info("Client connected")
 
     # Start the random number generator thread only if the thread has not been started before.
     if not passes_gbl_thread.is_alive():
